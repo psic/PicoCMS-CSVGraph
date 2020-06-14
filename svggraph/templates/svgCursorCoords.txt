@@ -1,0 +1,10 @@
+function svgCursorCoords(e, d) {
+  var pt;
+  d = d || svgNode(e);
+  if(!d || !d.createSVGPoint || !d.getScreenCTM) {
+    return [e.clientX,e.clientY];
+  }
+  pt = d.createSVGPoint(); pt.x = e.clientX; pt.y = e.clientY;
+  pt = pt.matrixTransform(d.getScreenCTM().inverse());
+  return [pt.x,pt.y];
+}
