@@ -11,44 +11,11 @@ require 'svggraph/autoloader.php';
  */
 class CSVGraphPlugin extends AbstractPicoPlugin
 {
-   /**
-	 * Stored config
-	 */
-	protected $config = array();
    
-   /**
-	 * Triggered after Pico has read its configuration
-	 *
-	 * @see    Pico::getConfig()
-	 * @param  array &$config array of config variables
-	 * @return void
-	 */
-	public function onConfigLoaded(array &$config)
-	{
-        if (isset($config['mysql_source']))
-        {
-            $db_conf = $config['mysql_source'];
-            $i=0;
-            foreach ($db_conf as $key => $value)
-            {
-                    foreach ($value as $key_param => $db_param)
-                        $this->config[$key][$key_param] = $db_param;
-                    $i++;
-            }
-        
-        }
-		
-	}
-	
     public function onContentPrepared(&$content)
     {
-        $graphR = new Goat1000\SVGGraph\SVGGraph(640, 480);
-//         $colours = array(
-//   array('red', 'yellow'), array('blue', 'white'),array('red', 'white')
-// );
-       $graphR->colours(['red','green','blue']);
-//        $graphR->colours($colours);
-        // Search for Embed shortcodes allover the content
+ 
+ // Search for Embed shortcodes allover the content
         preg_match_all('#\[csv_graph *.*?\]#s', $content, $matches);
 
         // Make sure we found some shortcodes
@@ -62,19 +29,34 @@ class CSVGraphPlugin extends AbstractPicoPlugin
                     $error = true;
                 if ( ! preg_match('/graph=[\"\']([^\"\']*)[\'\"]/', $match, $graph))
                     $error = true;
-               
+                preg_match('/title=[\"]([^\"]*)[\"]/', $match, $title); 
+                preg_match('/height=[\"]([^\"]*)[\"]/', $match, $height);
+                preg_match('/width=[\"]([^\"]*)[\"]/', $match, $width);
+                preg_match('/settings=[\"]([^\"]*)[\"]/', $match, $settings_conf);
+                preg_match('/is_data_column=[\"]([^\"]*)[\"]/', $match, $column);
                 if (! $error)
                 {
+                    if($column != null)
+                            $is_column = $column[1];
+                        else
+                            $is_column = 1;
+                            
                     // Replace embeding code with the shortcode in the content
-                    $result = $this->getData($file[1],$graph[1]);
-                    $values = array(
- array('Dough' => 30, 'Ray' => 50, 'Me' => 40, 'So' => 25, 'Far' => 45, 'Lard' => 35),
- array('Dough' => 20, 'Ray' => 30, 'Me' => 20, 'So' => 15, 'Far' => 25, 'Lard' => 35,
-  'Tea' => 45)
-);
-                   $graphR->values($result);
-//                     $graphR->values($values);
-                    $content = preg_replace('#\[csv_grap *.*?\]#s',  $graphR->fetch('MultiLineGraph', false), $content, 1);
+                    $result = $this->getData($file[1],$graph[1], $is_column);
+                    $settings = array();
+                    if ($title != null)
+                        $settings['graph_title']=$title[1];
+                    if ($settings_conf != null)
+                    {
+                        $settings = json_decode(str_replace('\'','"',$settings_conf[1]),true);
+                    }
+                    if($width != null && $height != null)
+                        $graphR = new Goat1000\SVGGraph\SVGGraph($width[1], $height[1],$settings);
+                    else
+                        $graphR = new Goat1000\SVGGraph\SVGGraph(640, 480,$settings);
+                    $graphR->values($result);
+                    
+                    $content = preg_replace('#\[csv_grap *.*?\]#s',  $graphR->fetch($graph[1], false), $content, 1);
                 }
                 else
                     $content = preg_replace('#\[csv_graph *.*?\]#s', '*CSVGraph ERROR*', $content, 1);
@@ -84,12 +66,10 @@ class CSVGraphPlugin extends AbstractPicoPlugin
             }
         }
         
-
-       
     }
     
     
-    private function getData($files, $line)
+    private function getData($files, $line,$is_column)
     {
         $results =array();
         $i = 0;
@@ -98,12 +78,29 @@ class CSVGraphPlugin extends AbstractPicoPlugin
             if (($h = fopen($file, "r")) !== FALSE) 
             {
             // Convert each line into the local $data variable
-                $file_data=array();
-                while (($data = fgetcsv($h, 20, ",")) !== FALSE) 
-                {		
-                    $results[$i][$data[0]] = $data[1];   
+                if($is_column)
+                {
+                      
+                    $header = fgetcsv($h, 20, ",");
+                    while (($data = fgetcsv($h, 20, ",")) !== FALSE) 
+                    {	
+                        $j=0;
+                        foreach($header as $field)
+                        {
+                            $results[$i][$field] = $data[$j];   
+                            $j++;
+                        }
+                    }   
+                    
                 }
-
+                else
+                {
+                    while (($data = fgetcsv($h, 20, ",")) !== FALSE) 
+                    {		
+                        $results[$i][$data[0]] = $data[1];   
+                    }    
+                        
+                }
             // Close the file
             fclose($h);
             $i++;
