@@ -106,7 +106,6 @@ class CSVGraphPlugin extends AbstractPicoPlugin
             $i++;
             }
         }
-        var_dump($results);
         return $results;
     }
        
