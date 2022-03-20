@@ -44,6 +44,7 @@ Copy the `CSVGraphPlugin.php`  into the `plugins` folder.
     
 + `width` & `height` (optional) : the width and the heigth of your chart (default : 640x480) 
 + `title` : the title of your chart
++ `colours` : you can add colours to your graph lines, bar, ... `colours="green,red"` where colours are defined in CSS style
 + `settings` : you can add any of settings in *JSON style*. See [setting](https://www.goat1000.com/svggraph-settings.php#general-options). `settings="{'back_colour': 'white', 'graph_title': 'Start of Fibonacci series'}"` (use `` ` `` in this JSON settings instead of `"`)
 
 # Get data from MySQL DB in bash script

@@ -32,6 +32,7 @@ class CSVGraphPlugin extends AbstractPicoPlugin
                 preg_match('/title=[\"]([^\"]*)[\"]/', $match, $title); 
                 preg_match('/height=[\"]([^\"]*)[\"]/', $match, $height);
                 preg_match('/width=[\"]([^\"]*)[\"]/', $match, $width);
+                preg_match('/colours=[\"]([^\"]*)[\"]/', $match, $colours);
                 preg_match('/settings=[\"]([^\"]*)[\"]/', $match, $settings_conf);
                 preg_match('/is_data_column=[\"]([^\"]*)[\"]/', $match, $column);
                 if (! $error)
@@ -54,6 +55,13 @@ class CSVGraphPlugin extends AbstractPicoPlugin
                         $graphR = new Goat1000\SVGGraph\SVGGraph($width[1], $height[1],$settings);
                     else
                         $graphR = new Goat1000\SVGGraph\SVGGraph(640, 480,$settings);
+                        
+                    if ($colours != null)
+                    {
+                            $colours_ar=explode(',',$colours[1]);
+                            $graphR->colours($colours_ar);
+                    }
+
                     $graphR->values($result);
                     
                     $content = preg_replace('#\[csv_grap *.*?\]#s',  $graphR->fetch($graph[1], false), $content, 1);
